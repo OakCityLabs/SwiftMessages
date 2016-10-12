@@ -12,15 +12,16 @@ private let fullScreenStyles: [UIModalPresentationStyle] = [.FullScreen, .OverFu
 
 extension UIViewController {
     
-    func sm_selectPresentationContextTopDown(presentationStyle: SwiftMessages.PresentationStyle) -> UIViewController {
+    func sm_selectPresentationContextTopDown(config: SwiftMessages.Config) -> UIViewController {
+        let presentationStyle = config.presentationStyle
         if let presented = sm_presentedFullScreenViewController() {
-            return presented.sm_selectPresentationContextTopDown(presentationStyle)
+            return presented.sm_selectPresentationContextTopDown(config)
         } else if case .Top = presentationStyle, let navigationController = sm_selectNavigationControllerTopDown() {
             return navigationController
         } else if case .Bottom = presentationStyle, let tabBarController = sm_selectTabBarControllerTopDown() {
             return tabBarController
         }
-        return WindowViewController(windowLevel: self.view.window?.windowLevel ?? UIWindowLevelNormal)
+        return WindowViewController(windowLevel: self.view.window?.windowLevel ?? UIWindowLevelNormal, config: config)
     }
     
     private func sm_selectNavigationControllerTopDown() -> UINavigationController? {
@@ -58,27 +59,28 @@ extension UIViewController {
         return nil
     }
 
-    func sm_selectPresentationContextBottomUp(presentationStyle: SwiftMessages.PresentationStyle) -> UIViewController {
+    func sm_selectPresentationContextBottomUp(config: SwiftMessages.Config) -> UIViewController {
+        let presentationStyle = config.presentationStyle
         if let parent = parentViewController {
             if let navigationController = parent as? UINavigationController {
                 if case .Top = presentationStyle where navigationController.sm_isVisible(view: navigationController.navigationBar) {
                     return navigationController
                 }
-                return navigationController.sm_selectPresentationContextBottomUp(presentationStyle)
+                return navigationController.sm_selectPresentationContextBottomUp(config)
             } else if let tabBarController = parent as? UITabBarController {
                 if case .Bottom = presentationStyle where tabBarController.sm_isVisible(view: tabBarController.tabBar) {
                     return tabBarController
                 }
-                return tabBarController.sm_selectPresentationContextBottomUp(presentationStyle)
+                return tabBarController.sm_selectPresentationContextBottomUp(config)
             }
         }
         if self.view is UITableView {
             // Never select scroll view as presentation context
             // because, you know, it scrolls.
             if let parent = self.parentViewController {
-                return parent.sm_selectPresentationContextBottomUp(presentationStyle)
+                return parent.sm_selectPresentationContextBottomUp(config)
             } else {
-                return WindowViewController(windowLevel: self.view.window?.windowLevel ?? UIWindowLevelNormal)
+                return WindowViewController(windowLevel: self.view.window?.windowLevel ?? UIWindowLevelNormal, config: config)
             }
         }
         return self
